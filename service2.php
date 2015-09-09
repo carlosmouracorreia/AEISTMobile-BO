@@ -1,16 +1,25 @@
 <?php
 header('Content-type=application/json; charset=utf-8');
-$host="localhost"; //replace with database hostname 
-$username="######"; //replace with database username 
-$password="######"; //replace with database password 
-$db_name="#######"; //replace with database name
- 
-$con=mysql_connect("$host", "$username", "$password")or die("cannot connect"); 
-mysql_select_db("$db_name")or die("cannot select DB");
+
+require_once("config.php");
+
 $sql = "select * from eventos ORDER BY evento_id ASC"; 
 mysql_query('SET CHARACTER SET utf8');
 $result = mysql_query($sql);
 $json = array();
+
+
+if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+	$ip = $_SERVER['HTTP_CLIENT_IP'];
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+
+	$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+} else {
+	$ip = $_SERVER['REMOTE_ADDR'];
+}
+
+mysql_query("INSERT INTO ip_data(ip) VALUES('".$ip."')");
+
  
 if(mysql_num_rows($result)){
 while($row=mysql_fetch_array($result,MYSQL_ASSOC)){

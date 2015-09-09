@@ -1,9 +1,10 @@
 <?php
-$pass = "##########";
+$pass = "########";
 
 //this is for android notifications
 require_once("curlRequest.php");
 require_once("../config.php");
+
 if(isset($_COOKIE["admin"]) and md5($pass)==$_COOKIE["admin"]) {
 
  
@@ -13,8 +14,7 @@ $alwidth = 301;            // maximum allowed width, in pixels
 $alheight = 301;           // maximum allowed height, in pixels
 $allowtype = array('bmp', 'gif', 'jpg', 'jpeg', 'png');        // allowed extensions
 
-
-$sql = "select * from eventos ORDER by evento_id DESC"; 
+$sql = "select * from churrascos ORDER by churrasco_id DESC"; 
 mysql_query('SET CHARACTER SET utf8');
 $result = mysql_query($sql);
 	?>
@@ -23,14 +23,14 @@ $result = mysql_query($sql);
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>AEIST Mobile BO - Eventos Manager </title>
+<title>AEIST Mobile BO - Churrascos Manager </title>
 </head>
 
 <body>
-<form action="eventos.php" method="post" enctype="multipart/form-data" name="form1" id="form1">
-<table width="294" height="209" border="1" align="center">
+<form action="churrascos.php" method="post" enctype="multipart/form-data" name="form1" id="form1">
+<table width="354" height="209" border="1" align="center">
   <tr>
-    <th colspan="2" scope="row">Adicionar Evento | <a href="churrascos.php">Adicionar Churrasco</a> | <a href="eventos.php?a=logout">Logout</a></th>
+    <th colspan="2" scope="row"><a href="eventos.php">Adicionar Evento</a> | Adicionar Churrasco | <a href="churrascos.php?a=logout">Logout</a></th>
   </tr>
   <tr>
     <th width="154" scope="row">Titulo:</th>
@@ -39,15 +39,13 @@ $result = mysql_query($sql);
   </tr>
   <tr>
     <th scope="row">Descrição:</th>
-    <td><textarea rows="4" cols="50" name="desc" id="textfield2"> </textarea></td>
+    <td>
+    <textarea rows="4" cols="50" name="desc" id="textfield2"> </textarea>
+	</td>
   </tr>
   <tr>
-	<th scope="row">Info Add(1 por linha):</th>
-	<td><textarea name="add" rows="4" cols="50"></textarea></td>
-	</tr>
-  <tr>
-    <th scope="row">Link:(c/ http://)</th>
-    <td><input type="text" name="link" id="textfield3" /></td>
+    <th scope="row">Dia:</th>
+    <td><input type="text" name="dia" id="textfield2" /></td>
   </tr>
   <tr>
     <th scope="row">Fotografia:</th>
@@ -81,25 +79,11 @@ $result = mysql_query($sql);
     if(move_uploaded_file($_FILES['fileup']['tmp_name'], $uploadpath)) { 
 	  $linkfoto = 'http://'.$_SERVER['HTTP_HOST'].rtrim(dirname($_SERVER['REQUEST_URI']), '\\/').'/'.$uploadpath.'';
 	  //envia dados para base de dados
-	  $input = isset($_POST['add'])?$_POST['add']:"";
-	  $resultado = mysql_query("SELECT MAX(evento_id) as maximo FROM eventos");
-	  $rowadd = mysql_fetch_array($resultado);
-	  $maxid = $rowadd["maximo"]+1;
-	  $dataact = "".date("d/m/Y")." ás ".date("h:i:sa")."";
-	  mysql_query("insert into eventos(evento_id,evento_titulo,evento_desc,evento_link,evento_foto,data) values(".$maxid.",'".filter_var($_POST["titulo"], FILTER_SANITIZE_STRING)."','".filter_var($_POST["desc"], FILTER_SANITIZE_STRING)."','".filter_var($_POST["link"], FILTER_SANITIZE_URL)."','".$linkfoto."','".$dataact."')");
-	  if (strlen($_POST['add'])!=0) {
-			$lines = explode("\n", str_replace("\r", "", $input));
-			foreach ($lines as $value) {
-				mysql_query("insert into eventos_misc(evento_id,texto_add) VALUES(".$maxid.",'".filter_var($value, FILTER_SANITIZE_STRING)."')");
-			}
-		}
-		else { 
-			mysql_query("insert into eventos_misc(evento_id,texto_add) VALUES(".$maxid.",'nada')");
-		}		
-	   $message = array("message" => "Novo Evento AEIST!",
-            "type" => "feed");  
+	  mysql_query("INSERT INTO `churrascos`(`churrasco_id`, `name`, `desc`, `urlFoto`, `dia`) VALUES (NULL,'".filter_var($_POST["titulo"], FILTER_SANITIZE_STRING)."','".filter_var($_POST["desc"], FILTER_SANITIZE_STRING)."','".$linkfoto."','".filter_var($_POST["dia"], FILTER_SANITIZE_STRING)."')");
+    $message = array("message" => "Novo Churrasco Adicionado!",
+            "type" => "bbq");  
     sendPushNotificationToGCM($message);
-	  header("Location: eventos.php?a=ok");
+    header("Location: churrascos.php?a=ok");
 	  
     }
     else echo '<b>Não foi possivel enviar o ficheiro.</b>';
@@ -109,16 +93,15 @@ $result = mysql_query($sql);
 
 	}
 	
-	if($_GET["a"] == "ok") { echo "<p><b>Evento adicionado!</b></p>"; } 
-	if($_GET["a"] == "del") { echo "<p><b>Evento apagado!</b></p>"; } 
+	if($_GET["a"] == "ok") { echo "<p><b>Churrasco adicionado!</b></p>"; } 
+	if($_GET["a"] == "del") { echo "<p><b>Churrasco apagado!</b></p>"; } 
 	if($_GET["a"] == "logout") {
 		setcookie("admin", md5($pass), time()-3600);
 		header("Location: index.php?a=logout");
 		} 
 	if($_GET["del"] != "") {
-		mysql_query("delete from eventos_misc where evento_id='".$_GET["del"]."'");
-		mysql_query("delete from eventos where evento_id='".$_GET["del"]."'");
-		header("Location: eventos.php?a=del");
+		mysql_query("delete from churrascos where churrasco_id='".$_GET["del"]."'");
+		header("Location: churrascos.php?a=del");
 	}
 	?></p></th>
   </tr>
@@ -129,9 +112,8 @@ $result = mysql_query($sql);
 <tr>
 	<td><b>Titulo</b></td>
     <td width="350"><b>Descrição</b></td>
-    <td><b>Link</b></td>
-    <td><b>Fotografia</b></td>
-	<td><b>Info Add</b></td>
+	<td><b>Data</b></td>
+	<td><b>Fotografia</b></td>
     <td></td>
 </tr>
 <?php 
@@ -139,18 +121,11 @@ if(mysql_num_rows($result)){
 while($row=mysql_fetch_array($result)){
 	?>
  <tr>
-    <td><?php echo $row['evento_titulo']; ?></td>
-    <td><?php echo $row['evento_desc']; ?></td>
-    <td><a href="<?php echo $row['evento_link']; ?>"><?php echo $row['evento_link']; ?></a></td>
-    <td><img src="<?php echo $row['evento_foto']; ?>" /></td>
-	<td><?php
-	$resultads = mysql_query("SELECT texto_add from eventos_misc where evento_id=".$row['evento_id']."");
-	
-	while($rowadds = mysql_fetch_array($resultads)) {
-		echo("".$rowadds['texto_add']."<br/>");
-	}
-	?></td>
-    <td><a href="eventos.php?del=<?php echo $row['evento_id']; ?>">Apagar</a></td>
+    <td><?php echo $row['name']; ?></td>
+    <td><?php echo $row['desc']; ?></td>
+    <td><?php echo $row['dia']; ?></td>
+    <td><img src="<?php echo $row['urlFoto']; ?>" /></td>
+    <td><a href="churrascos.php?del=<?php echo $row['churrasco_id']; ?>">Apagar</a></td>
   </tr>
 <?php
 }
